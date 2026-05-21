@@ -1,0 +1,14 @@
+{
+  "BM25": {
+    "hit_rate": 0.7,
+    "mrr": 0.6517
+  },
+  "Baseline (nomic-embed-text)": {
+    "hit_rate": 0.69,
+    "mrr": 0.6117
+  },
+  "Fine-tuned (ours)": {
+    "hit_rate": 0.71,
+    "mrr": 0.6633
+  }
+}

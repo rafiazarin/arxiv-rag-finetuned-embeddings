@@ -1,0 +1,57 @@
+{
+  "baseline_mean_relevance": 0.1122,
+  "finetuned_mean_relevance": 0.0633,
+  "delta": -0.0489,
+  "queries": [
+    {
+      "query": "How do transformer attention mechanisms work?",
+      "baseline": 0.0556,
+      "finetuned": 0.0
+    },
+    {
+      "query": "What are methods for training neural language models?",
+      "baseline": 0.2,
+      "finetuned": 0.1333
+    },
+    {
+      "query": "How does reinforcement learning handle exploration vs exploitation?",
+      "baseline": 0.0,
+      "finetuned": 0.0
+    },
+    {
+      "query": "What is the role of convolutional layers in image recognition?",
+      "baseline": 0.2,
+      "finetuned": 0.1333
+    },
+    {
+      "query": "How do graph neural networks propagate information?",
+      "baseline": 0.3333,
+      "finetuned": 0.1333
+    },
+    {
+      "query": "What clustering algorithms work well for high dimensional data?",
+      "baseline": 0.0,
+      "finetuned": 0.1667
+    },
+    {
+      "query": "How does dropout prevent overfitting in deep networks?",
+      "baseline": 0.0,
+      "finetuned": 0.0
+    },
+    {
+      "query": "What are common approaches to machine translation?",
+      "baseline": 0.2,
+      "finetuned": 0.0
+    },
+    {
+      "query": "How do generative adversarial networks produce realistic images?",
+      "baseline": 0.0,
+      "finetuned": 0.0
+    },
+    {
+      "query": "What optimization algorithms are used in deep learning?",
+      "baseline": 0.1333,
+      "finetuned": 0.0667
+    }
+  ]
+}

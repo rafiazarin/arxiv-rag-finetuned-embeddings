@@ -1,0 +1,39 @@
+# Virtual environments — both names
+.venv/
+venv/
+
+# Large data and binary files — not in git, too big
+data/corpus.json
+data/training_pairs.json
+experiments/baseline/baseline.faiss
+experiments/baseline/baseline_chunks.pkl
+experiments/finetuned/finetuned.faiss
+experiments/finetuned/finetuned_chunks.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Mac
+.DS_Store
+
+# MLflow runs
+mlruns/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Secrets
+*.env
+.env
+
+# MLflow database
+mlflow.db
+
+# Model weights in experiments (hosted on HuggingFace instead)
+experiments/finetuned/model/
+experiments/finetuned/finetuned.faiss
+experiments/finetuned/finetuned_chunks.pkl
+experiments/baseline/baseline.faiss
+experiments/baseline/baseline_chunks.pkl

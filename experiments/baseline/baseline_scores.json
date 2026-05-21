@@ -1,0 +1,7 @@
+{
+  "label": "baseline",
+  "hit_rate_at_k": 0.69,
+  "mrr_at_k": 0.6117,
+  "k": 3,
+  "num_eval_samples": 100
+}
