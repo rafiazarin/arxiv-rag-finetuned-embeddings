@@ -154,7 +154,7 @@ themselves are responsible for.
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/arxiv-rag-finetuned-embeddings
+git clone https://github.com/rafiazarin/arxiv-rag-finetuned-embeddings
 cd arxiv-rag-finetuned-embeddings
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -215,13 +215,13 @@ python step5_compare.py
 ## Model
 
 Fine-tuned model available on HuggingFace:  
-`YOUR_HF_USERNAME/arxiv-cs-embedding-finetuned`
+`rafiazarin/arxiv-cs-embedding-finetuned`
 
 Usage:
 ```python
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("YOUR_HF_USERNAME/arxiv-cs-embedding-finetuned")
+model = SentenceTransformer("rafiazarin/arxiv-cs-embedding-finetuned")
 embeddings = model.encode(["your query here"], normalize_embeddings=True)
 ```
 
