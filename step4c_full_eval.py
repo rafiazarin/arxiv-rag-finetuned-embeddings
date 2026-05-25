@@ -84,12 +84,38 @@ def load_eval_pairs(eval_type="synthetic"):
 
 # ── Match function ────────────────────────────────────────────────────────────
 
-def is_match(retrieved_text, ground_truth):
-    """Word overlap match — same logic used throughout project."""
-    gt_words  = set(ground_truth.lower().split())
-    ret_words = set(retrieved_text.lower().split())
-    overlap   = len(gt_words & ret_words) / len(gt_words) if gt_words else 0
-    return overlap > 0.5
+
+
+# Cache the baseline model for match scoring
+_match_model = None
+
+def get_match_model():
+    global _match_model
+    if _match_model is None:
+        from sentence_transformers import SentenceTransformer
+        _match_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _match_model
+
+def is_match(retrieved_text, ground_truth, threshold=0.75):
+    """
+    Semantic similarity match using embedding cosine similarity.
+    More robust than word overlap for paraphrases and domain jargon.
+    Falls back to word overlap if model unavailable.
+    """
+    try:
+        model = get_match_model()
+        embeddings = model.encode(
+            [retrieved_text, ground_truth],
+            normalize_embeddings=True,
+            convert_to_numpy=True
+        )
+        similarity = float(np.dot(embeddings[0], embeddings[1]))
+        return similarity >= threshold
+    except Exception:
+        # Fallback to word overlap
+        a = set(retrieved_text.lower().split())
+        b = set(ground_truth.lower().split())
+        return len(a & b) / len(a) > 0.5 if a else False
 
 # ── Core evaluator ────────────────────────────────────────────────────────────
 
