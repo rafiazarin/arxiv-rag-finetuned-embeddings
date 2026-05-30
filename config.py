@@ -17,7 +17,7 @@ CHUNK_OVERLAP = 50
 OLLAMA_LLM   = "gemma3:4b"
 OLLAMA_EMBED = "nomic-embed-text"
 FINETUNED_MODEL_PATH = os.path.join(FINETUNED_DIR, "model")
-
+MIXED_MODEL_PATH = os.path.join(EXPERIMENTS_DIR, "mixed", "model")
 # RAG
 TOP_K = 3
 
