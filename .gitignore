@@ -5,12 +5,18 @@ venv/
 # Large data files
 data/corpus.json
 data/training_pairs.json
-
+data/corpus_20k.json
+data/pubmed_pool.json
+data/training_pairs_mistral.json
+data/hard_negative_pairs.json
 # Large binary files — hosted on HuggingFace instead
 experiments/*/model/model.safetensors
 experiments/*/model/pytorch_model.bin
 experiments/*/*.faiss
 experiments/*/*.pkl
+experiments/*/model/
+experiments/*.faiss
+experiments/*_chunks.pkl
 
 # Python cache
 __pycache__/

@@ -1,0 +1,116 @@
+{
+  "BGE-base (arXiv only)": {
+    "hit_rate": 0.92,
+    "hit_rate_ci": [
+      0.86,
+      0.97
+    ],
+    "mrr": 0.87,
+    "mrr_ci": [
+      0.8133,
+      0.9217
+    ],
+    "ndcg_10": 0.7046,
+    "ndcg_10_ci": [
+      0.6566,
+      0.7462
+    ],
+    "n_queries": 100,
+    "k": 3
+  },
+  "BGE-base (mixed 50/50)": {
+    "hit_rate": 0.92,
+    "hit_rate_ci": [
+      0.86,
+      0.97
+    ],
+    "mrr": 0.8667,
+    "mrr_ci": [
+      0.81,
+      0.9217
+    ],
+    "ndcg_10": 0.7039,
+    "ndcg_10_ci": [
+      0.6499,
+      0.751
+    ],
+    "n_queries": 100,
+    "k": 3
+  },
+  "BGE-base (hard negatives)": {
+    "hit_rate": 0.71,
+    "hit_rate_ci": [
+      0.63,
+      0.8
+    ],
+    "mrr": 0.64,
+    "mrr_ci": [
+      0.5417,
+      0.7317
+    ],
+    "ndcg_10": 0.5386,
+    "ndcg_10_ci": [
+      0.465,
+      0.6094
+    ],
+    "n_queries": 100,
+    "k": 3
+  },
+  "BGE-base (mistral pairs)": {
+    "hit_rate": 0.91,
+    "hit_rate_ci": [
+      0.85,
+      0.96
+    ],
+    "mrr": 0.8617,
+    "mrr_ci": [
+      0.795,
+      0.9167
+    ],
+    "ndcg_10": 0.703,
+    "ndcg_10_ci": [
+      0.6526,
+      0.7482
+    ],
+    "n_queries": 100,
+    "k": 3
+  },
+  "Staged gen->dom (MARCO then arXiv)": {
+    "hit_rate": 0.92,
+    "hit_rate_ci": [
+      0.87,
+      0.97
+    ],
+    "mrr": 0.87,
+    "mrr_ci": [
+      0.8083,
+      0.9283
+    ],
+    "ndcg_10": 0.7043,
+    "ndcg_10_ci": [
+      0.6558,
+      0.7527
+    ],
+    "n_queries": 100,
+    "k": 3
+  },
+  "Staged dom->gen (arXiv then MARCO)": {
+    "hit_rate": 0.92,
+    "hit_rate_ci": [
+      0.86,
+      0.97
+    ],
+    "mrr": 0.8767,
+    "mrr_ci": [
+      0.815,
+      0.9317
+    ],
+    "ndcg_10": 0.7069,
+    "ndcg_10_ci": [
+      0.6609,
+      0.7547
+    ],
+    "n_queries": 100,
+    "k": 3
+  }
+}

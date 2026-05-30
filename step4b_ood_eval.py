@@ -10,7 +10,8 @@ import json
 import os
 from sentence_transformers import SentenceTransformer
 from baseline_rag import embed_text as baseline_embed
-from config import BASELINE_DIR, FINETUNED_DIR, FINETUNED_MODEL_PATH, TOP_K
+from config import BASELINE_DIR, FINETUNED_DIR, FINETUNED_MODEL_PATH, TOP_K, EXPERIMENTS_DIR
+#from config import BASELINE_DIR, FINETUNED_DIR, FINETUNED_MODEL_PATH, TOP_K
 
 # General CS queries that should be answerable from arXiv CS abstracts
 # but are phrased differently from our training distribution
@@ -83,9 +84,8 @@ def evaluate_ood(index, chunks, embed_fn, label):
 
     mean_relevance = round(float(np.mean([r["avg_keyword_relevance"] for r in results])), 4)
     return mean_relevance, results
-
+#from config import BASELINE_DIR, FINETUNED_DIR, FINETUNED_MODEL_PATH, TOP_K, EXPERIMENTS_DIR
 def main():
-    # Load indexes
     b_index = faiss.read_index(f"{BASELINE_DIR}/baseline.faiss")
     with open(f"{BASELINE_DIR}/baseline_chunks.pkl", "rb") as f:
         b_chunks = pickle.load(f)
@@ -94,50 +94,51 @@ def main():
     with open(f"{FINETUNED_DIR}/finetuned_chunks.pkl", "rb") as f:
         ft_chunks = pickle.load(f)
 
-    ft_model  = SentenceTransformer(FINETUNED_MODEL_PATH)
-    ft_embed  = lambda t: ft_model.encode(t, normalize_embeddings=True).tolist()
+    ft_model = SentenceTransformer(FINETUNED_MODEL_PATH)
+    ft_embed = lambda t: ft_model.encode(t, normalize_embeddings=True).tolist()
 
-    print("Running out-of-distribution evaluation...")
-    print("(10 general CS queries not from training distribution)\n")
+    # Load mixed models
+    mixed_models = {}
+    for ratio in [80, 70, 50]:
+        model_path  = os.path.join(EXPERIMENTS_DIR, f"mixed_{ratio}", "model")
+        index_path  = os.path.join(EXPERIMENTS_DIR, f"mixed_{ratio}", "index.faiss")
+        chunks_path = os.path.join(EXPERIMENTS_DIR, f"mixed_{ratio}", "chunks.pkl")
+        if os.path.exists(model_path) and os.path.exists(index_path):
+            mx_index = faiss.read_index(index_path)
+            with open(chunks_path, "rb") as f:
+                mx_chunks = pickle.load(f)
+            mx_model = SentenceTransformer(model_path)
+            mx_embed = lambda t, m=mx_model: m.encode(
+                t, normalize_embeddings=True).tolist()
+            mixed_models[ratio] = (mx_index, mx_chunks, mx_embed)
 
-    b_score,  b_details  = evaluate_ood(b_index,  b_chunks,  baseline_embed, "baseline")
-    ft_score, ft_details = evaluate_ood(ft_index, ft_chunks, ft_embed,       "finetuned")
+    print("Running out-of-distribution evaluation...\n")
 
-    # Print per-query comparison
-    col = 48
-    print(f"{'Query':<{col}} {'Baseline':>10} {'Fine-tuned':>12}")
-    print("-" * (col + 24))
-    for b, ft in zip(b_details, ft_details):
-        marker = " ⚠" if ft["avg_keyword_relevance"] < b["avg_keyword_relevance"] else " ✓"
-        print(f"  {b['query'][:col-2]:<{col}} {b['avg_keyword_relevance']:>10.4f} {ft['avg_keyword_relevance']:>12.4f}{marker}")
+    results = {}
+    results["Baseline"] = evaluate_ood(b_index, b_chunks, baseline_embed, "baseline")
+    results["Fine-tuned (arXiv 100%)"] = evaluate_ood(
+        ft_index, ft_chunks, ft_embed, "finetuned")
+    for ratio, (mx_index, mx_chunks, mx_embed) in mixed_models.items():
+        label = f"Mixed {ratio}/{100-ratio}"
+        results[label] = evaluate_ood(mx_index, mx_chunks, mx_embed, label)
 
-    print("-" * (col + 24))
-    print(f"  {'Mean keyword relevance':<{col}} {b_score:>10.4f} {ft_score:>12.4f}")
-
-    delta = round(ft_score - b_score, 4)
-    direction = "degradation" if delta < 0 else "improvement"
-    print(f"\n  OOD {direction}: {delta:+.4f}")
+    # Print table
+    col = 30
+    print(f"\n{'Method':<{col}} {'OOD Score':>10}")
+    print("-" * (col + 12))
+    for label, (score, _) in sorted(results.items(), key=lambda x: x[1][0]):
+        delta = score - results["Baseline"][0]
+        marker = " ⚠" if delta < 0 else " ✓"
+        print(f"  {label:<{col}} {score:>10.4f}  ({delta:+.4f}){marker}")
 
     # Save
-    ood_results = {
-        "baseline_mean_relevance":  b_score,
-        "finetuned_mean_relevance": ft_score,
-        "delta": delta,
-        "queries": [
-            {
-                "query":    b["query"],
-                "baseline": b["avg_keyword_relevance"],
-                "finetuned": ft["avg_keyword_relevance"]
-            }
-            for b, ft in zip(b_details, ft_details)
-        ]
-    }
-    out = f"{FINETUNED_DIR}/ood_eval.json"
+    out = os.path.join(EXPERIMENTS_DIR, "ood_results_all.json")
     with open(out, "w") as f:
-        json.dump(ood_results, f, indent=2)
-    print(f"\n  Saved to {out}")
-    print("\n  Note: OOD degradation on fine-tuned model is expected behaviour")
-    print("  (catastrophic forgetting). See README limitations section.")
-
+        json.dump(
+            {k: {"mean_relevance": v[0], "queries": v[1]}
+             for k, v in results.items()},
+            f, indent=2
+        )
+    print(f"\nSaved to {out}")
 if __name__ == "__main__":
     main()

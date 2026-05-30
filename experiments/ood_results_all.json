@@ -1,0 +1,277 @@
+{
+  "Baseline": {
+    "mean_relevance": 0.1122,
+    "queries": [
+      {
+        "query": "How do transformer attention mechanisms work?",
+        "avg_keyword_relevance": 0.0556,
+        "top1_preview": "A fundamental problem in neuroscience is understanding how working memory -- the ability to store information at interme"
+      },
+      {
+        "query": "What are methods for training neural language models?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": "The random initialization of weights of a multilayer perceptron makes it possible to model its training process as a Las"
+      },
+      {
+        "query": "How does reinforcement learning handle exploration vs exploitation?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "rage via unsupervised Hebbian-type learning, (ii) for adaptive regulation of the working point and (iii) for the suppres"
+      },
+      {
+        "query": "What is the role of convolutional layers in image recognition?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": " are represented by operators in Hilbert space. We further outline how these representations yield sub-band filter banks"
+      },
+      {
+        "query": "How do graph neural networks propagate information?",
+        "avg_keyword_relevance": 0.3333,
+        "top1_preview": "In this paper a theoretical model of functioning of a neural circuit during a behavioral response has been proposed. A n"
+      },
+      {
+        "query": "What clustering algorithms work well for high dimensional data?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "m. Classical Viterbi algorithm requires space, which is impractical for analysis of long DNA sequences (such as complete"
+      },
+      {
+        "query": "How does dropout prevent overfitting in deep networks?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "We study cascading failures in networks using a dynamical flow model based on simple conservation and distribution laws "
+      },
+      {
+        "query": "What are common approaches to machine translation?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": "Intelligent Input Methods (IM) are essential for making text entries in many East Asian scripts, but their application t"
+      },
+      {
+        "query": "How do generative adversarial networks produce realistic images?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "re a pairwise neural-network system as an alternative approach to improving the robustness of face recognition. In our e"
+      },
+      {
+        "query": "What optimization algorithms are used in deep learning?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "s, that sample the search space without exploring it thoroughly. Such algorithms can find very good results, without any"
+      }
+    ]
+  },
+  "Fine-tuned (arXiv 100%)": {
+    "mean_relevance": 0.0633,
+    "queries": [
+      {
+        "query": "How do transformer attention mechanisms work?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "A fundamental problem in neuroscience is understanding how working memory -- the ability to store information at interme"
+      },
+      {
+        "query": "What are methods for training neural language models?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "n encoding procedure. Specifically, the elements of information either static or dynamic that appear in a road intersect"
+      },
+      {
+        "query": "How does reinforcement learning handle exploration vs exploitation?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "istical optimisation. By using a tee dee lambda learning algorithm to continuously adapt neural network agent intelligen"
+      },
+      {
+        "query": "What is the role of convolutional layers in image recognition?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "an be considered as an image with a resolution of two by two for each layer. The results show that this method performs "
+      },
+      {
+        "query": "How do graph neural networks propagate information?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "The properties of certain networks are determined by hidden variables that are not explicitly measured. The conditional "
+      },
+      {
+        "query": "What clustering algorithms work well for high dimensional data?",
+        "avg_keyword_relevance": 0.1667,
+        "top1_preview": "ream. Some patterns might occur so much together that they should form a combined pattern. In this way the patterns in t"
+      },
+      {
+        "query": "How does dropout prevent overfitting in deep networks?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "re a pairwise neural-network system as an alternative approach to improving the robustness of face recognition. In our e"
+      },
+      {
+        "query": "What are common approaches to machine translation?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "There is a huge amount of historical documents in libraries and in various National Archives that have not been exploite"
+      },
+      {
+        "query": "How do generative adversarial networks produce realistic images?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "re a pairwise neural-network system as an alternative approach to improving the robustness of face recognition. In our e"
+      },
+      {
+        "query": "What optimization algorithms are used in deep learning?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "s, that sample the search space without exploring it thoroughly. Such algorithms can find very good results, without any"
+      }
+    ]
+  },
+  "Mixed 80/20": {
+    "mean_relevance": 0.0917,
+    "queries": [
+      {
+        "query": "How do transformer attention mechanisms work?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "A fundamental problem in neuroscience is understanding how working memory -- the ability to store information at interme"
+      },
+      {
+        "query": "What are methods for training neural language models?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "voice recognition. Keywords: Speech recognition, Acoustic model, Arabic language, HMMs, CMUSphinx-4, Artificial intellig"
+      },
+      {
+        "query": "How does reinforcement learning handle exploration vs exploitation?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "istical optimisation. By using a tee dee lambda learning algorithm to continuously adapt neural network agent intelligen"
+      },
+      {
+        "query": "What is the role of convolutional layers in image recognition?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": "an be considered as an image with a resolution of two by two for each layer. The results show that this method performs "
+      },
+      {
+        "query": "How do graph neural networks propagate information?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": "In this paper a theoretical model of functioning of a neural circuit during a behavioral response has been proposed. A n"
+      },
+      {
+        "query": "What clustering algorithms work well for high dimensional data?",
+        "avg_keyword_relevance": 0.25,
+        "top1_preview": "ream. Some patterns might occur so much together that they should form a combined pattern. In this way the patterns in t"
+      },
+      {
+        "query": "How does dropout prevent overfitting in deep networks?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "oefficients lead to inaccurate predictions of long range bullet drop, retained energy and wind drift."
+      },
+      {
+        "query": "What are common approaches to machine translation?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "There is a huge amount of historical documents in libraries and in various National Archives that have not been exploite"
+      },
+      {
+        "query": "How do generative adversarial networks produce realistic images?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "re a pairwise neural-network system as an alternative approach to improving the robustness of face recognition. In our e"
+      },
+      {
+        "query": "What optimization algorithms are used in deep learning?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "s, that sample the search space without exploring it thoroughly. Such algorithms can find very good results, without any"
+      }
+    ]
+  },
+  "Mixed 70/30": {
+    "mean_relevance": 0.0717,
+    "queries": [
+      {
+        "query": "How do transformer attention mechanisms work?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "A fundamental problem in neuroscience is understanding how working memory -- the ability to store information at interme"
+      },
+      {
+        "query": "What are methods for training neural language models?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "voice recognition. Keywords: Speech recognition, Acoustic model, Arabic language, HMMs, CMUSphinx-4, Artificial intellig"
+      },
+      {
+        "query": "How does reinforcement learning handle exploration vs exploitation?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "istical optimisation. By using a tee dee lambda learning algorithm to continuously adapt neural network agent intelligen"
+      },
+      {
+        "query": "What is the role of convolutional layers in image recognition?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "an be considered as an image with a resolution of two by two for each layer. The results show that this method performs "
+      },
+      {
+        "query": "How do graph neural networks propagate information?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "In this paper a theoretical model of functioning of a neural circuit during a behavioral response has been proposed. A n"
+      },
+      {
+        "query": "What clustering algorithms work well for high dimensional data?",
+        "avg_keyword_relevance": 0.25,
+        "top1_preview": "ream. Some patterns might occur so much together that they should form a combined pattern. In this way the patterns in t"
+      },
+      {
+        "query": "How does dropout prevent overfitting in deep networks?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "oefficients lead to inaccurate predictions of long range bullet drop, retained energy and wind drift."
+      },
+      {
+        "query": "What are common approaches to machine translation?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "There is a huge amount of historical documents in libraries and in various National Archives that have not been exploite"
+      },
+      {
+        "query": "How do generative adversarial networks produce realistic images?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "ace the situation is more subtle. V-representability is formally assured but the mapping is often chaotic making the act"
+      },
+      {
+        "query": "What optimization algorithms are used in deep learning?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "s, that sample the search space without exploring it thoroughly. Such algorithms can find very good results, without any"
+      }
+    ]
+  },
+  "Mixed 50/50": {
+    "mean_relevance": 0.0917,
+    "queries": [
+      {
+        "query": "How do transformer attention mechanisms work?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "A fundamental problem in neuroscience is understanding how working memory -- the ability to store information at interme"
+      },
+      {
+        "query": "What are methods for training neural language models?",
+        "avg_keyword_relevance": 0.1333,
+        "top1_preview": "voice recognition. Keywords: Speech recognition, Acoustic model, Arabic language, HMMs, CMUSphinx-4, Artificial intellig"
+      },
+      {
+        "query": "How does reinforcement learning handle exploration vs exploitation?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "istical optimisation. By using a tee dee lambda learning algorithm to continuously adapt neural network agent intelligen"
+      },
+      {
+        "query": "What is the role of convolutional layers in image recognition?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": "an be considered as an image with a resolution of two by two for each layer. The results show that this method performs "
+      },
+      {
+        "query": "How do graph neural networks propagate information?",
+        "avg_keyword_relevance": 0.2,
+        "top1_preview": "The properties of certain networks are determined by hidden variables that are not explicitly measured. The conditional "
+      },
+      {
+        "query": "What clustering algorithms work well for high dimensional data?",
+        "avg_keyword_relevance": 0.25,
+        "top1_preview": "ream. Some patterns might occur so much together that they should form a combined pattern. In this way the patterns in t"
+      },
+      {
+        "query": "How does dropout prevent overfitting in deep networks?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "re a pairwise neural-network system as an alternative approach to improving the robustness of face recognition. In our e"
+      },
+      {
+        "query": "What are common approaches to machine translation?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "There is a huge amount of historical documents in libraries and in various National Archives that have not been exploite"
+      },
+      {
+        "query": "How do generative adversarial networks produce realistic images?",
+        "avg_keyword_relevance": 0.0,
+        "top1_preview": "curate in smooth flows, and maintains accuracy even when the energy scales in the flow are highly disparate."
+      },
+      {
+        "query": "What optimization algorithms are used in deep learning?",
+        "avg_keyword_relevance": 0.0667,
+        "top1_preview": "s, that sample the search space without exploring it thoroughly. Such algorithms can find very good results, without any"
+      }
+    ]
+  }
+}

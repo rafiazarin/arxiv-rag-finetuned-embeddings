@@ -7,9 +7,14 @@ Full evaluation script with:
 
 Accepts a label and embed_fn so it works for any model.
 Run once per model, results saved to experiments/{label}/full_scores.json
+
+python step4c_full_eval.py --eval synthetic   # → full_scores_synthetic.json
+python step4c_full_eval.py --eval manual      # → full_scores_manual.json  (already done)
+python step4c_full_eval.py --eval combined    # → full_scores_combined.json
 """
 import os
 import json
+import argparse
 import numpy as np
 import faiss
 import pickle
@@ -227,8 +232,18 @@ def print_results(all_scores):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    eval_pairs = load_eval_pairs(eval_type="synthetic")
-    print(f"Eval set: {len(eval_pairs)} queries (synthetic)\n")
+    parser = argparse.ArgumentParser(description="RAG full evaluation script")
+    parser.add_argument(
+        "--eval",
+        choices=["synthetic", "manual", "combined"],
+        default="synthetic",
+        help="Which eval set to use (default: synthetic)"
+    )
+    args = parser.parse_args()
+    eval_type = args.eval
+
+    eval_pairs = load_eval_pairs(eval_type=eval_type)
+    print(f"Eval set: {len(eval_pairs)} queries ({eval_type})\n")
 
     b_index, b_chunks = load_index(name="baseline", models_dir=BASELINE_DIR)
     ft_index = faiss.read_index(os.path.join(FINETUNED_DIR, "finetuned.faiss"))
@@ -242,30 +257,30 @@ def main():
 
     # BM25
     print("Evaluating BM25...")
-    with mlflow.start_run(run_name="bm25"):
+    with mlflow.start_run(run_name=f"bm25-{eval_type}"):
         s = evaluate_bm25(b_chunks, eval_pairs)
-        mlflow.log_metrics({k: v for k, v in s.items()
-                           if isinstance(v, float)})
+        mlflow.log_param("eval_type", eval_type)
+        mlflow.log_metrics({k: v for k, v in s.items() if isinstance(v, float)})
         all_scores["BM25"] = s
 
     # Baseline embedding
     print("Evaluating baseline embedding...")
-    with mlflow.start_run(run_name="baseline-nomic"):
+    with mlflow.start_run(run_name=f"baseline-nomic-{eval_type}"):
         s = evaluate(b_index, b_chunks, baseline_embed, eval_pairs)
-        mlflow.log_metrics({k: v for k, v in s.items()
-                           if isinstance(v, float)})
+        mlflow.log_param("eval_type", eval_type)
+        mlflow.log_metrics({k: v for k, v in s.items() if isinstance(v, float)})
         all_scores["Baseline (nomic-embed-text)"] = s
 
     # Fine-tuned embedding
     print("Evaluating fine-tuned embedding...")
-    with mlflow.start_run(run_name="finetuned-arxiv"):
+    with mlflow.start_run(run_name=f"finetuned-arxiv-{eval_type}"):
         s = evaluate(ft_index, ft_chunks, ft_embed, eval_pairs)
-        mlflow.log_metrics({k: v for k, v in s.items()
-                           if isinstance(v, float)})
+        mlflow.log_param("eval_type", eval_type)
+        mlflow.log_metrics({k: v for k, v in s.items() if isinstance(v, float)})
         all_scores["Fine-tuned (arXiv only)"] = s
 
-    # Save
-    out = os.path.join(FINETUNED_DIR, "full_scores.json")
+    # Save — filename reflects eval type, nothing ever gets overwritten
+    out = os.path.join(FINETUNED_DIR, f"full_scores_{eval_type}.json")
     with open(out, "w") as f:
         json.dump(all_scores, f, indent=2)
 
