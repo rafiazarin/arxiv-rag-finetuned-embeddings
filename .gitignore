@@ -35,4 +35,6 @@ mlflow.db
 
 # Secrets
 *.env
-.env
+.envcheckpoints/
+*.zip
+experiments/baseline_20k/
