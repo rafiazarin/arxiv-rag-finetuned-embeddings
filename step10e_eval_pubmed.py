@@ -27,7 +27,8 @@ import numpy as np
 import faiss
 import pickle
 from tqdm import tqdm
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
+from scipy import stats
 from baseline_rag import embed_text as nomic_embed, load_index
 from config import DATA_DIR, EXPERIMENTS_DIR, BASELINE_DIR, TOP_K
 
@@ -71,22 +72,47 @@ def bootstrap_ci(scores, n_resamples=1000, ci=0.95):
     hi = np.percentile(means, (1 + ci) / 2 * 100)
     return round(float(lo), 4), round(float(hi), 4)
 
+def mcnemar_test(hits_a, hits_b):
+    """McNemar's test for paired binary Hit@k outcomes (with continuity correction)."""
+    hits_a, hits_b = np.array(hits_a), np.array(hits_b)
+    b = int(np.sum((hits_a == 1) & (hits_b == 0)))
+    c = int(np.sum((hits_a == 0) & (hits_b == 1)))
+    if b + c == 0:
+        return 1.0
+    chi2 = (abs(b - c) - 1) ** 2 / (b + c)
+    return round(float(1 - stats.chi2.cdf(chi2, df=1)), 4)
+
+def permutation_test(scores_a, scores_b, n_permutations=10000):
+    """Two-sided permutation test for difference in means (MRR, NDCG)."""
+    a, b     = np.array(scores_a), np.array(scores_b)
+    observed = abs(np.mean(a) - np.mean(b))
+    combined = np.concatenate([a, b])
+    n_a      = len(a)
+    rng      = np.random.default_rng(42)
+    count    = 0
+    for _ in range(n_permutations):
+        perm = rng.permutation(combined)
+        if abs(np.mean(perm[:n_a]) - np.mean(perm[n_a:])) >= observed:
+            count += 1
+    return round(float(count / n_permutations), 4)
+
 # ── Match function (identical to step4d) ──────────────────────────────────────
+# Cross-encoder avoids circularity — no bi-encoder model under evaluation
+# shares this architecture. ms-marco raw logit > 0 = match.
 
 _match_model = None
 
 def get_match_model():
     global _match_model
     if _match_model is None:
-        _match_model = SentenceTransformer("all-MiniLM-L6-v2")
+        _match_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
     return _match_model
 
-def is_match(retrieved_text, ground_truth, threshold=0.75):
+def is_match(retrieved_text, ground_truth, threshold=0.0):
     try:
         model = get_match_model()
-        embs  = model.encode([retrieved_text, ground_truth],
-                             normalize_embeddings=True, convert_to_numpy=True)
-        return float(np.dot(embs[0], embs[1])) >= threshold
+        score = model.predict([(ground_truth, retrieved_text)])[0]
+        return float(score) >= threshold
     except Exception:
         a = set(retrieved_text.lower().split())
         b = set(ground_truth.lower().split())
@@ -136,6 +162,9 @@ def evaluate(embed_fn, index, chunks, eval_pairs, k=TOP_K):
         "ndcg_10_ci":  bootstrap_ci(ndcg_scores),
         "n_queries":   len(eval_pairs),
         "k":           k,
+        # Per-query vectors for significance tests — stripped before JSON save
+        "_hit_scores": hit_scores,
+        "_rr_scores":  rr_scores,
     }
 
 # ── Pretty print ──────────────────────────────────────────────────────────────
@@ -155,6 +184,26 @@ def print_results(all_scores, eval_type):
         lo_n, hi_n = s["ndcg_10_ci"]
         print(f"  {'':>{col}} {f'[{lo_h},{hi_h}]':>8} {f'[{lo_m},{hi_m}]':>8} {f'[{lo_n},{hi_n}]':>10}")
     print(f"{'='*72}\n")
+
+def print_significance(all_scores, reference_label="PubMed Baseline (nomic, no FT)"):
+    """Pairwise significance tests vs. the no-FT baseline."""
+    if reference_label not in all_scores:
+        print(f"  (Reference '{reference_label}' not found — skipping significance table)\n")
+        return
+    ref = all_scores[reference_label]
+    col = 35
+    print(f"  Significance vs. '{reference_label}'")
+    print(f"  {'Model':<{col}} {'McNemar(Hit)':>14} {'Perm(MRR)':>12}")
+    print(f"  {'-'*65}")
+    for label, s in sorted(all_scores.items(), key=lambda x: -x[1]["mrr"]):
+        if label == reference_label:
+            continue
+        p_hit = mcnemar_test(s["_hit_scores"], ref["_hit_scores"])
+        p_mrr = permutation_test(s["_rr_scores"], ref["_rr_scores"])
+        sig_h = " *" if p_hit < 0.05 else "  "
+        sig_m = " *" if p_mrr < 0.05 else "  "
+        print(f"  {label:<{col}} {p_hit:>12.4f}{sig_h} {p_mrr:>10.4f}{sig_m}")
+    print(f"  (* p < 0.05 two-sided)\n")
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -192,11 +241,15 @@ def main():
         print(f"\nEvaluating: {label}")
         all_scores[label] = evaluate(embed_fn, index, chunks, eval_pairs)
 
+    print_results(all_scores, eval_type)
+    print_significance(all_scores)
+
+    # Strip per-query vectors before saving
+    saveable = {k: {m: v for m, v in s.items() if not m.startswith("_")}
+                for k, s in all_scores.items()}
     out_path = os.path.join(EXPERIMENTS_DIR, f"pubmed_scores_{eval_type}.json")
     with open(out_path, "w") as f:
-        json.dump(all_scores, f, indent=2)
-
-    print_results(all_scores, eval_type)
+        json.dump(saveable, f, indent=2)
     print(f"Saved to {out_path}")
 
 if __name__ == "__main__":

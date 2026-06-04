@@ -25,7 +25,7 @@ from step4c_full_eval import (
     evaluate, evaluate_bm25, load_eval_pairs, print_results
 )
 
-MIXED_DIR        = os.path.join(EXPERIMENTS_DIR, "mixed")
+MIXED_DIR        = os.path.join(EXPERIMENTS_DIR, "mixed_50")
 MIXED_MODEL_PATH = os.path.join(MIXED_DIR, "model")
 
 def build_mixed_index(chunks):
@@ -127,14 +127,14 @@ def main():
             all_results[eval_type] = scores
 
             with mlflow.start_run(run_name=f"final-{eval_type}"):
-               for method, s in scores.items():
-        # sanitize method name for MLflow
-                  key = method.replace("(", "").replace(")", "").replace(" ", "_").replace("-", "_")
-                  mlflow.log_metrics({
-                    f"{key}_hit":  s["hit_rate"],
-                    f"{key}_mrr":  s["mrr"],
-                    f"{key}_ndcg": s["ndcg_10"]
-             })
+                for method, s in scores.items():
+                    # sanitize method name for MLflow
+                    key = method.replace("(", "").replace(")", "").replace(" ", "_").replace("-", "_")
+                    mlflow.log_metrics({
+                        f"{key}_hit":  s["hit_rate"],
+                        f"{key}_mrr":  s["mrr"],
+                        f"{key}_ndcg": s["ndcg_10"]
+                    })
 
     # Save everything
     out = os.path.join(EXPERIMENTS_DIR, "final_results.json")
