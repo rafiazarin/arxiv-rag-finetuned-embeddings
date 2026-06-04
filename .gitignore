@@ -38,3 +38,6 @@ mlflow.db
 .envcheckpoints/
 *.zip
 experiments/baseline_20k/
+data/manual_eval_batch2.json
+data/manual_eval_combined.json
+data/sample_for_manual_eval*.txt
