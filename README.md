@@ -1,295 +1,146 @@
-# Domain-Adaptive RAG with Fine-Tuned Embeddings
+# Fine-Tuning Embedding Models for RAG: What Actually Helps
 
-A systematic study of embedding model fine-tuning for retrieval-augmented
-generation (RAG), covering six training strategies, two domains, a
-cross-encoder evaluation fix, and a replication on biomedical text.
+A study of fine-tuning embedding models for retrieval-augmented generation (RAG)
+on two domains: arXiv abstracts and PubMed abstracts. Built with free tools
+(local Mac + free Colab T4).
 
-The central finding: standard RAG evaluation is vulnerable to two
-compounding contamination mechanisms — using the same LLM for both
-training data generation and evaluation queries, and using the same
-bi-encoder model family as both the model under evaluation and the
-relevance judge. Replacing the relevance judge with an independent
-cross-encoder eliminates both effects and substantially changes the
-conclusions.
+**Status (Sep 2026):**
+- **PubMed results were re-run from scratch** in one controlled run. Model and code are public.
+- **arXiv results come from the original run (May–Jun 2026).** Those models and the arXiv
+  training pairs were lost in a hardware failure, so they cannot be re-run or checked.
+  They are reported as-is, with caveats.
 
-Built entirely with free, local tools — no paid APIs, no cloud compute
-beyond a free Colab T4 GPU session for fine-tuning.
-
-**Models on HuggingFace:**
-- [`rafiazarin/arxiv-cs-embedding-finetuned`](https://huggingface.co/rafiazarin/arxiv-cs-embedding-finetuned) — all-MiniLM fine-tuned on arXiv pairs
-- [`rafiazarin/arxiv-ms-marco-embedding-mixed`](https://huggingface.co/rafiazarin/arxiv-ms-marco-embedding-mixed) — all-MiniLM fine-tuned on mixed arXiv + MS MARCO
-
-**Companion paper:** *Fine-Tuning Embedding Models for RAG: Disentangling
-Evaluation Contamination from Genuine Domain Adaptation* — manuscript in
-preparation, 2025.
+**Model on HuggingFace:** [`rafiazarin/bge-base-pubmed-finetuned`](https://huggingface.co/rafiazarin/bge-base-pubmed-finetuned)
 
 ---
 
-## Results
+## Main result — PubMed (re-run, Sep 2026)
 
-### arXiv — Primary Evaluation (n=140 human-written queries)
+90 human-written queries over 7,627 chunks from 2,000 PubMed abstracts.
+All models evaluated in the same run with the same relevance matcher.
+Results file: [`experiments/pubmed_step11_scores.json`](experiments/pubmed_step11_scores.json).
 
-BGE-base-en-v1.5 variants, evaluated with an independent
-**cross-encoder relevance matcher** (`cross-encoder/ms-marco-MiniLM-L-6-v2`).
-No pairwise difference between the five standard variants is statistically
-significant (McNemar p > 0.45; permutation p > 0.90 for all comparisons).
-
-| Model | Training Data | Hit@3 | MRR | NDCG@10 |
-|---|---|---|---|---|
-| BGE-base | arXiv only (gemma) | **0.9071** | 0.8405 | 0.6717 |
-| BGE-base | Mixed 50/50 | 0.9000 | **0.8464** | **0.6743** |
-| BGE-base | arXiv only (mistral) | 0.9000 | 0.8429 | 0.6743 |
-| BGE-base | Staged MARCO→arXiv | 0.9000 | 0.8417 | 0.6712 |
-| BGE-base | Staged arXiv→MARCO | 0.9000 | 0.8405 | 0.6725 |
-| BGE-base | Hard negatives ⚠️ | 0.7143 | 0.6131 | 0.5156 |
-| — | — | — | — | — |
-| nomic-embed-text † | none (no FT) | 0.9600 | 0.8911 | 0.7043 |
-| BM25 † | n/a | 0.9133 | 0.8767 | 0.6798 |
-
-> † Evaluated in a prior run using all-MiniLM-L6-v2 cosine matcher
-> (threshold 0.75) — not directly comparable to cross-encoder rows above.
-> Hard-negatives model is significantly worse than all others (p < 0.001).
-
-### arXiv — Evaluation Mode Comparison (BGE arXiv-only, cross-encoder)
-
-Shows that contamination from the prior bi-encoder matcher is fully
-eliminated — synthetic queries now score *lower* than human queries,
-as expected.
-
-| Eval Set | Query Source | n | Hit@3 | MRR | NDCG@10 |
-|---|---|---|---|---|---|
-| Manual | Human-written | 140 | 0.9071 | 0.8405 | 0.6717 |
-| Synthetic (held-out) | gemma3:4b | 100 | 0.8900 | 0.8050 | 0.6494 |
-| Extreme ablation | Training pairs (direct) | 100 | 0.9300 | 0.8850 | 0.6618 |
-
-> Under the prior bi-encoder matcher, the fine-tuned model appeared to gain
-> +6.8% MRR on synthetic eval vs. the no-FT baseline while losing −1.2% on
-> manual — a ranking reversal characteristic of evaluation contamination.
-> This effect vanishes with the cross-encoder.
-
-### PubMed — Domain Adaptation (n=90 human-written queries)
-
-Both models evaluated with the same cross-encoder matcher — a fair,
-direct comparison. Fine-tuning yields a large, statistically significant
-improvement when the base model is genuinely out-of-distribution.
-
-| Model | Training Data | Hit@3 | MRR | NDCG@10 | McNemar | Perm(MRR) |
-|---|---|---|---|---|---|---|
-| BGE-base (fine-tuned) | PubMed (gemma) | **0.8778** | **0.7722** | **0.5631** | p < 0.001 | p = 0.002 |
-| nomic-embed-text | none (no FT) | 0.6889 | 0.5889 | 0.4722 | — | — |
-
----
-
-## Key Findings
-
-### Finding 1 — Two evaluation contamination mechanisms, not one
-
-Standard RAG evaluation is contaminated in two compounding ways:
-1. **Generator contamination** — using the same LLM to generate training
-   pairs and evaluation queries makes the fine-tuned model appear better
-   on eval than it is.
-2. **Matcher contamination** — using the same bi-encoder model family as
-   both the model under evaluation and the relevance judge inflates match
-   rates by scoring retrieved content through the same representational lens.
-
-Both effects are eliminated by using a cross-encoder for relevance
-judgement. After this fix, the apparent +6.8% MRR advantage of the
-fine-tuned model on synthetic eval disappears entirely.
-
-### Finding 2 — Fine-tuning shows no significant benefit in-domain (arXiv)
-
-With clean evaluation, all five standard BGE fine-tuning strategies
-(arXiv-only, mixed, mistral pairs, staged variants) produce statistically
-identical results. No training strategy, data source, or mixing ratio
-produces a significant improvement over any other (p > 0.45 across all
-comparisons, n=140). When the base model is already in-distribution,
-domain-specific fine-tuning data adds negligible value.
-
-### Finding 3 — Fine-tuning provides genuine improvement out-of-domain (PubMed)
-
-On biomedical text, where nomic-embed-text's general pre-training data
-underrepresents domain vocabulary, fine-tuning on 1,300 gemma-generated
-PubMed pairs yields +18.9 pp Hit@3 (0.878 vs. 0.689, p < 0.001). The
-improvement is *larger* on human-written queries than on synthetic ones —
-the opposite of a contamination pattern. This confirms genuine domain
-adaptation rather than evaluation artifact.
-
-### Finding 4 — Hard negative mining collapses in narrow-domain corpora
-
-ANCE-style hard negative mining produces Hit@3 = 0.714, significantly
-below every other variant (p < 0.001). In a narrow corpus (arXiv
-physics/math), topically similar passages are common, making them likely
-to be relevant positives. Treating them as hard negatives during
-MultipleNegativesRankingLoss training penalises the model for retrieving
-on-topic content, inducing representational collapse. Hard negative mining
-requires either a diverse corpus or a cross-encoder filter to screen false
-negatives before training.
-
----
-
-## Architecture
-
-```
-arXiv abstracts (5k or 20k docs)    PubMed abstracts (2k docs)
-         ↓                                    ↓
-   Chunking (400 tokens, 50 overlap)
-         ↓                   ↓
-   FAISS IndexFlatIP     Fine-tuned BGE-base-en-v1.5
-   (cosine similarity)       (domain-specific pairs)
-         ↓
-   Top-3 chunk retrieval
-         ↓
-   Ollama gemma3:4b → Answer
-```
-
-**Fine-tuning pipeline (arXiv):**
-```
-gemma3:4b synthetic pairs (3,000)   MS MARCO pairs (1,500)
-             ↓                              ↓
-      MultipleNegativesRankingLoss — 6 training variants
-      BGE-base-en-v1.5 base model
-      Google Colab T4 GPU / M2 local
-             ↓
-      Evaluated: 140 human-written queries
-      Matcher: cross-encoder/ms-marco-MiniLM-L-6-v2
-      Stats: McNemar test (Hit@3) + permutation test (MRR)
-```
-
----
-
-## Experimental Variants
-
-| Variant | Training Data | Pairs | Notes |
+| Model | Hit@3 | MRR (95% CI) | NDCG@10 |
 |---|---|---|---|
-| BGE arXiv-only | arXiv gemma3:4b | 2,700 | Primary in-domain baseline |
-| BGE mixed 50/50 | arXiv + MS MARCO | 2,700 | Highest MRR on arXiv |
-| BGE mistral | arXiv mistral:latest | 2,700 | Tests generator independence |
-| BGE staged gen→dom | MARCO then arXiv | 2×1,350 | Sequential staging |
-| BGE staged dom→gen | arXiv then MARCO | 2×1,350 | Reverse staging |
-| BGE hard negatives | Mined triplets | 2,699 | Collapsed (false negatives) |
-| BGE PubMed | PubMed gemma3:4b | 1,300 | Out-of-domain replication |
+| BGE-base, fine-tuned (5 epochs) | 0.8667 | 0.7704 (0.6925–0.8481) | 0.5609 |
+| BGE-base, fine-tuned (epoch-1 checkpoint) | 0.8778 | 0.7722 (0.6944–0.8389) | 0.5620 |
+| BGE-base, no fine-tuning | 0.8444 | 0.7222 (0.6481–0.7944) | 0.5378 |
+| nomic-embed-text, no fine-tuning | 0.7778 | 0.6519 (0.5667–0.7370) | 0.5083 |
+
+Paired significance tests (McNemar for Hit@3, paired permutation for MRR):
+
+| Comparison | Hit@3 p | MRR p |
+|---|---|---|
+| Fine-tuned (5 ep) vs. untuned BGE | 0.6171 | 0.0153 |
+| Untuned BGE vs. nomic | 0.0771 | 0.0323 |
+| Fine-tuned (5 ep) vs. nomic | 0.0133 | 0.0005 |
+| Fine-tuned 5 ep vs. epoch 1 | 1.0000 | 1.0000 |
+
+**What this shows:**
+1. Most of the gain over nomic comes from **choosing BGE**, not from fine-tuning.
+2. Fine-tuning adds a **small ranking gain** (MRR +0.048) and **no significant Hit@3 gain**.
+3. Training beyond epoch 1 added nothing measurable.
+
+**Caveats:** one training run (seed variance unmeasured); n = 90; the fine-tuning MRR
+result (p = 0.0153) would not survive a Bonferroni correction across the 4 tests.
 
 ---
 
-## Evaluation Methodology
+## arXiv results (original run, May–Jun 2026 — not re-verifiable)
 
-**Relevance matching** determines whether a retrieved passage is relevant
-to a ground-truth positive. Two approaches were compared:
+140 human-written queries over 13,050 chunks from 5,000 arXiv abstracts.
+Same cross-encoder matcher as above. Results file:
+[`experiments/bge_scores_manual.json`](experiments/bge_scores_manual.json).
 
-| Matcher | Model | Threshold | Notes |
-|---|---|---|---|
-| Bi-encoder (prior) | all-MiniLM-L6-v2 cosine | ≥ 0.75 | Susceptible to matcher contamination |
-| Cross-encoder (this work) | cross-encoder/ms-marco-MiniLM-L-6-v2 | logit ≥ 0 | Independent architecture; no circularity |
-
-**Significance testing:**
-- McNemar's test with continuity correction for paired binary Hit@3 outcomes
-- 10,000-permutation two-sided test for MRR differences
-- 95% bootstrap confidence intervals (1,000 resamples) on all metrics
-
-**Evaluation sets:**
-
-| Set | Domain | n | Source | Purpose |
+| BGE-base variant | Training data | Hit@3 | MRR (95% CI) | NDCG@10 |
 |---|---|---|---|---|
-| arXiv manual | arXiv | 140 | Human-written | Primary honest eval |
-| arXiv synthetic | arXiv | 100 | gemma3:4b (held-out) | Contamination demonstration |
-| arXiv extreme | arXiv | 100 | Training pairs (direct) | Upper contamination bound |
-| PubMed manual | PubMed | 90 | Human-written | Domain adaptation eval |
-| PubMed synthetic | PubMed | 100 | gemma3:4b (held-out) | Cross-domain contamination check |
-| 20k arXiv manual | arXiv 20k | 140 | Human-written | Corpus scale generalisation |
+| arXiv only | 2,700 gemma3:4b pairs | 0.9071 | 0.8405 (0.7869–0.8941) | 0.6717 |
+| Mixed 50/50 | 1,350 arXiv + 1,350 MS MARCO | 0.9000 | 0.8464 (0.7893–0.9000) | 0.6743 |
+| Mistral pairs | 2,700 mistral pairs | 0.9000 | 0.8429 (0.7869–0.8976) | 0.6743 |
+| Staged MARCO → arXiv | 1,350 + 1,350, 3 + 3 epochs | 0.9000 | 0.8417 (0.7821–0.8940) | 0.6712 |
+| Staged arXiv → MARCO | 1,350 + 1,350, 3 + 3 epochs | 0.9000 | 0.8405 (0.7821–0.8929) | 0.6725 |
+| Hard negatives (TripletLoss) | 2,499 mined triplets | 0.7143 | 0.6131 (0.5404–0.6845) | 0.5156 |
+
+**Observations:**
+- The five standard variants perform almost identically; their 95% CIs overlap heavily.
+- The hard-negatives model is clearly worse; its MRR CI does not overlap the others.
+  One possible cause: in a narrow corpus, mined "hard negatives" are often actually
+  relevant (false negatives). This was not tested. It also used a different loss
+  (TripletLoss), which is a confound.
+- On a 20k-abstract corpus, all variants dropped slightly
+  ([`bge_scores_manual_20k.json`](experiments/bge_scores_manual_20k.json)).
+
+**Why these can't be taken further:**
+- There was **no untuned-BGE baseline**, so this run cannot show whether fine-tuning helped at all.
+- Model selection saved a new checkpoint only when validation *improved*. On PubMed,
+  validation was saturated at 1.0 from epoch 1, so only the epoch-1 checkpoint was saved.
+  The arXiv mistral model used the same 10-query validation setup, so it was **likely an
+  epoch-1 checkpoint too**. Other arXiv variants used 200 synthetic validation pairs;
+  whether they saturated is unknown.
+- Significance tests in this run compared each model only against arXiv-only, used an
+  unpaired permutation test, and per-query scores were not saved.
+- The models and training pairs were lost, so none of this can be re-run.
 
 ---
+
+## Earlier observation: evaluation contamination (motivation, not a controlled result)
+
+Early experiments used an all-MiniLM-L6-v2 model fine-tuned on gemma3:4b pairs, judged by
+a bi-encoder similarity matcher. Against untuned nomic-embed-text it scored:
+- **+0.068 MRR** on 100 held-out gemma-generated queries (0.8600 vs. 0.7917)
+- **−0.012 MRR** on 150 human-written queries (0.8789 vs. 0.8911)
+
+([`experiments/finetuned/full_scores_synthetic.json`](experiments/finetuned/full_scores_synthetic.json),
+[`experiments/finetuned/full_scores.json`](experiments/finetuned/full_scores.json))
+
+This pattern suggested that evaluating on queries from the same LLM that generated the
+training data inflates results, and motivated switching to human-written queries and an
+independent cross-encoder matcher. It is **not** a controlled test: the model families and
+matchers differ between conditions, and the synthetic query set was lost, so it cannot be re-run.
+
+---
+
+## Method
+
+- **Corpora.** arXiv: first 5,000 records of `gfissore/arxiv-abstracts-2021` with no field
+  filter. The first record is arXiv:0704.0001, a particle-physics paper, so the corpus is
+  not CS-only; the field mix was not measured. PubMed: first 2,000 abstracts of
+  `ccdv/pubmed-summarization` (train split) that pass a length filter, shuffled with seed 42.
+- **Chunking.** 400 characters, 50-character overlap. FAISS exact cosine search.
+- **Training.** MultipleNegativesRankingLoss (except hard negatives: TripletLoss),
+  batch 32, lr 2e-5, 100 warmup steps, 5 epochs (staged: 3 + 3).
+- **Relevance.** For each query, a retrieved chunk counts as relevant if
+  `cross-encoder/ms-marco-MiniLM-L-6-v2` scores it ≥ 0 against the query's source abstract.
+- **Metrics.** Hit@3, MRR@3, NDCG@10, with 1,000-sample bootstrap 95% CIs.
 
 ## Limitations
 
-1. **Wide confidence intervals** — n=140 arXiv queries yields bootstrap
-   CIs of ±0.03–0.05 on MRR. Most differences between fine-tuning variants
-   are not statistically significant at this sample size. At least 300
-   queries per domain are recommended for detecting effects smaller than 5 pp.
+1. Relevance is judged by an automatic matcher, not human labels. The matcher is an MS MARCO
+   query–passage model used here to compare passage to passage; this use was not validated.
+2. Small evaluation sets (90 and 140 queries) give wide confidence intervals.
+3. Training queries are LLM-generated.
+4. Queries were encoded without BGE's query instruction prefix, and nomic without its
+   task prefixes.
+5. The nomic PubMed score changed between the original run (0.6889 Hit@3) and the re-run
+   (0.7778) on identical data, most likely because of a newer Ollama version. Only numbers
+   from the same run are compared above.
+6. `step11_eval_pubmed_baselines.py` currently expects both fine-tuned models as local folders.
 
-2. **Unequal matchers for nomic/BM25** — These baselines were evaluated
-   with the prior all-MiniLM matcher; BGE variants use the cross-encoder.
-   A fully fair comparison would require re-evaluating nomic under the
-   cross-encoder, which is left for future work.
-
-3. **Single training pass per variant** — No hyperparameter search was
-   performed. Training configuration (5 epochs, batch size 64, lr 2e-5)
-   was held constant across all variants.
-
-4. **Hard negative false-negative problem** — The hard-negative collapse
-   is attributed to false negatives in the narrow-domain corpus, not to
-   a fundamental failure of the approach. Cross-encoder filtering of
-   mined negatives before training is expected to recover performance.
-
----
-
-## Setup
+## Reproduce the PubMed results
 
 ```bash
 git clone https://github.com/rafiazarin/arxiv-rag-finetuned-embeddings
 cd arxiv-rag-finetuned-embeddings
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-ollama pull gemma3:4b
-ollama pull nomic-embed-text
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install torch==2.12.0 sentence-transformers==5.5.1 transformers==5.9.0 faiss-cpu==1.13.2 \
+            numpy==2.4.6 scipy==1.17.1 datasets==4.8.5 ollama==0.6.2 tqdm==4.67.3
+ollama pull nomic-embed-text           # with `ollama serve` running
+
+python restore_pubmed_pool.py          # rebuilds data/pubmed_pool.json, verified against repo data
+python step10b_build_pubmed_index.py   # nomic baseline index
+# Train in Colab: notebooks/step10d_train_pubmed_bge.ipynb, then unzip into experiments/
+python step11_eval_pubmed_baselines.py
 ```
 
----
-
-## Reproducing Results
-
-```bash
-# 1. Download arXiv corpus (5k docs)
-python step1_load_dataset.py
-
-# 2. Build baseline FAISS index (nomic-embed-text)
-python step2_build_index.py
-
-# 3. Generate synthetic training pairs — gemma3:4b (~90 min, resumable)
-python step3_generate_pairs.py
-
-# 4. Generate mistral training pairs
-python step3d_generate_pairs_mistral.py
-
-# 5. Mine hard negative triplets
-python step3b_mine_negatives.py
-
-# 6. Scale corpus to 20k (runs overnight on M2)
-python step8_scale_corpus.py
-
-# 7. Fine-tune BGE variants on Colab (see /notebooks)
-#    Upload training pairs + val set; unzip model to experiments/<variant>/
-
-# 8. Evaluate all arXiv BGE variants
-python step4d_eval_bge.py --eval manual       # 140 human queries
-python step4d_eval_bge.py --eval synthetic    # 100 held-out synthetic
-python step4d_eval_bge.py --eval extreme      # contamination ablation
-python step4d_eval_bge.py --eval manual --corpus 20k  # 20k corpus
-
-# 9. PubMed domain replication
-python step10b_build_pubmed_index.py
-python step10c_generate_pubmed_pairs.py
-# Fine-tune via step10d_train_pubmed_bge.ipynb (Colab)
-python step10e_eval_pubmed.py --eval manual
-python step10e_eval_pubmed.py --eval synthetic
-```
-
----
-
-## Stack
-
-| Component | Tool |
-|---|---|
-| Corpora | arXiv CS abstracts + PubMed abstracts via HuggingFace Datasets |
-| Vector store | FAISS IndexFlatIP (exact cosine, L2-normalised) |
-| Baseline embedding | nomic-embed-text via Ollama |
-| Fine-tuned embedding | BGE-base-en-v1.5, sentence-transformers |
-| Early experiments | all-MiniLM-L6-v2, sentence-transformers |
-| Training loss | MultipleNegativesRankingLoss |
-| General training data | MS MARCO v1.1 via HuggingFace Datasets |
-| Synthetic data LLMs | gemma3:4b and mistral:latest via Ollama |
-| Relevance matching | cross-encoder/ms-marco-MiniLM-L-6-v2 (CrossEncoder) |
-| Training compute | Google Colab T4 GPU (free tier) + Apple M2 local |
-| LLM for generation | gemma3:4b via Ollama (local, M2 GPU) |
-| Experiment tracking | MLflow |
-| Eval metrics | Hit@3, MRR, NDCG@10 with 95% bootstrap CI |
-| Significance tests | McNemar (Hit@3), permutation test (MRR) |
+`requirements.txt` lists the full original environment; the command above installs only what
+the PubMed pipeline needs.
