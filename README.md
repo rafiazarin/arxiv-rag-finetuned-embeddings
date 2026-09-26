@@ -38,11 +38,31 @@ Paired significance tests (McNemar for Hit@3, paired permutation for MRR):
 
 **What this shows:**
 1. Most of the gain over nomic comes from **choosing BGE**, not from fine-tuning.
-2. Fine-tuning adds a **small ranking gain** (MRR +0.048) and **no significant Hit@3 gain**.
+2. Fine-tuning adds a **small, consistent ranking gain**: mean MRR +0.045 across 3 seeds (p = 0.0229, see seed study below). There is **no significant Hit@3 gain**.
 3. Training beyond epoch 1 added nothing measurable.
 
-**Caveats:** one training run (seed variance unmeasured); n = 90; the fine-tuning MRR
-result (p = 0.0153) would not survive a Bonferroni correction across the 4 tests.
+### Seed study (pre-registered)
+
+The primary test was fixed before running: mean MRR of 3 fine-tuned seeds vs. untuned BGE,
+paired permutation test on per-query reciprocal rank averaged over seeds.
+All models evaluated in one Colab run. Results: [`experiments/pubmed_seed_study.json`](experiments/pubmed_seed_study.json).
+Notebook: [`notebooks/step12_pubmed_seed_study.ipynb`](notebooks/step12_pubmed_seed_study.ipynb).
+
+| Model | Hit@3 | MRR | Hit@3 p vs. untuned | MRR p vs. untuned |
+|---|---|---|---|---|
+| Fine-tuned, seed 42 (published) | 0.8667 | 0.7704 | 0.6171 | 0.0153 |
+| Fine-tuned, seed 1 | 0.8667 | 0.7704 | 0.6171 | 0.0153 |
+| Fine-tuned, seed 2 | 0.8667 | 0.7593 | 0.6171 | 0.0699 |
+| BGE-base, no fine-tuning | 0.8444 | 0.7222 | — | — |
+
+**Primary result:** mean MRR over the 3 seeds 0.7667 (SD 0.0064) vs. 0.7222 untuned, p = 0.0229.
+Hit@3 did not change significantly for any seed.
+
+Seeds 1 and 42 have different weights but identical top-3 rankings on all 90 queries.
+The Colab run reproduced the Mac numbers for the published model and untuned BGE exactly.
+
+**Caveats:** n = 90; relevance judged by an automatic matcher; the seed-2 model alone is not
+significant on MRR (p = 0.0699).
 
 ---
 
