@@ -5,12 +5,13 @@ on PubMed and arXiv abstracts, with a focus on whether the evaluation itself can
 Built with free tools (local Mac + free Colab T4).
 
 **Summary (PubMed, 90 human-written queries):**
-1. **The base model choice has the clearest effect.** Untuned BGE-base beats nomic-embed-text on MRR under both
-   relevance metrics below (p = 0.0011 and p = 0.0323). Hit@3 differences were not significant.
-2. **Whether fine-tuning helps depends on how relevance is judged.** Under an automatic
-   cross-encoder judge, fine-tuning adds +0.0445 MRR (3 seeds, p = 0.0229). Under an objective
-   metric (did retrieval return a chunk of the query's source abstract?), the pre-registered
-   comparison shows no significant gain (p = 0.299).
+1. **The base model choice has the clearest effect.** Untuned BGE-base beats nomic-embed-text on MRR
+   in every setting tested (p = 0.0011 on 2,000 abstracts, p < 0.0001 on 20,000, p = 0.0323 under the
+   automatic judge). Hit@3 was significant only on the 20,000-abstract corpus (p = 0.0033).
+2. **Fine-tuning on 1,300 synthetic pairs did not significantly help on the objective metric.**
+   Pre-registered tests: p = 0.299 on 2,000 abstracts, and p = 0.1158 on 20,000 abstracts, where the
+   fine-tuned model scored lower (MRR 0.7611 vs. 0.8019). Only the automatic cross-encoder judge
+   showed a gain (+0.0445 MRR, 3 seeds, p = 0.0229).
 3. **The automatic judge agreed poorly with human labels** (Cohen's kappa 0.2 on 60 items),
    so results that rely on it alone should not be trusted.
 
@@ -49,6 +50,28 @@ Results: [`experiments/pubmed_source_match_scores.json`](experiments/pubmed_sour
 Untuned BGE already finds the source abstract in the top 3 for 98.9% of queries, so there is
 little room for fine-tuning to help on this metric (ceiling effect). A chunk from the source
 abstract does not always contain the answer.
+
+### Metric 1 on a 10x larger corpus (ceiling check)
+
+Same queries and relevance rule, searched over 20,000 abstracts (75,862 chunks; a superset of the
+original 2,000). The primary test (fine-tuned vs. untuned BGE, MRR) was fixed before running.
+Script: [`step15_scale_pubmed.py`](step15_scale_pubmed.py); results:
+[`experiments/pubmed_20k_source_match_scores.json`](experiments/pubmed_20k_source_match_scores.json).
+
+| Model | Hit@3 | MRR (95% CI) | NDCG@10 |
+|---|---|---|---|
+| BGE-base, no fine-tuning | 0.8667 | 0.8019 (0.7241–0.8778) | 0.6086 |
+| BGE-base, fine-tuned (5 epochs) | 0.8222 | 0.7611 (0.6796–0.8389) | 0.5830 |
+| nomic-embed-text, no fine-tuning | 0.7333 | 0.6519 (0.5611–0.7408) | 0.5316 |
+
+| Comparison (paired tests) | Hit@3 p (McNemar) | MRR p (permutation) |
+|---|---|---|
+| **Fine-tuned vs. untuned BGE (primary)** | 0.3428 | **0.1158** |
+| Untuned BGE vs. nomic | 0.0033 | < 0.0001 |
+| Fine-tuned vs. nomic | 0.0433 | 0.0026 |
+
+The larger corpus removes the ceiling (untuned Hit@3 drops from 0.9889 to 0.8667). Fine-tuning still
+shows no significant gain, and its point estimate is lower than the untuned model's.
 
 ### Metric 2 — automatic judge: cross-encoder relevance
 
@@ -166,7 +189,8 @@ matchers differ between conditions, and the synthetic query set was lost.
    labels, and the objective metric counts any chunk of the source abstract.
 2. Human labels come from one annotator on 60 items.
 3. Small evaluation sets (90 and 140 queries); the PubMed queries were written from the abstracts,
-   which makes the source abstract easy to retrieve (ceiling effect on Metric 1).
+   which makes the source abstract easy to retrieve (ceiling effect on Metric 1 at 2,000
+   abstracts; the 20,000-abstract check addresses this).
 4. Training queries are LLM-generated.
 5. Queries were encoded without BGE's query instruction prefix, and nomic without its task prefixes.
 6. The nomic PubMed score changed between the original run and the re-run on identical data, most
@@ -186,7 +210,7 @@ python restore_pubmed_pool.py                       # rebuilds data/pubmed_pool.
 python step10b_build_pubmed_index.py                # nomic baseline index
 python step11_eval_pubmed_baselines.py --from-hub   # Metric 2, uses the published model
 python step13_matcher_validation.py score           # judge vs. human labels (labels in data/)
-# Metric 1 (step14_source_match_eval.py) and the epoch-1 comparison need local models:
+# Metric 1 (step14_source_match_eval.py, step15_scale_pubmed.py) and the epoch-1 comparison need local models:
 # run notebooks/step10d_train_pubmed_bge.ipynb in Colab and unzip into experiments/.
 # Seed study: notebooks/step12_pubmed_seed_study.ipynb (Colab).
 ```
