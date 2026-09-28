@@ -1,0 +1,33 @@
+{
+  "n_eval": 90,
+  "n_eval_source_in_training": 63,
+  "settings": {
+    "objective_2k": {
+      "mrr_diff": 0.0204,
+      "ci95": [
+        -0.0148,
+        0.0537
+      ],
+      "seen_diff": 0.037,
+      "unseen_diff": -0.0185
+    },
+    "objective_20k": {
+      "mrr_diff": -0.0407,
+      "ci95": [
+        -0.0907,
+        0.0056
+      ],
+      "seen_diff": -0.0291,
+      "unseen_diff": -0.0679
+    },
+    "automatic_judge_2k": {
+      "mrr_diff": 0.0481,
+      "ci95": [
+        0.013,
+        0.0852
+      ],
+      "seen_diff": 0.0423,
+      "unseen_diff": 0.0617
+    }
+  }
+}

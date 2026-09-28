@@ -5,13 +5,17 @@ on PubMed and arXiv abstracts, with a focus on whether the evaluation itself can
 Built with free tools (local Mac + free Colab T4).
 
 **Summary (PubMed, 90 human-written queries):**
-1. **The base model choice has the clearest effect.** Untuned BGE-base beats nomic-embed-text on MRR
+1. **The base model choice had the clearest effect in this setup.** Untuned BGE-base beat nomic-embed-text on MRR
    in every setting tested (p = 0.0011 on 2,000 abstracts, p < 0.0001 on 20,000, p = 0.0323 under the
    automatic judge). Hit@3 was significant only on the 20,000-abstract corpus (p = 0.0033).
-2. **Fine-tuning on 1,300 synthetic pairs did not significantly help on the objective metric.**
+   Neither model used its recommended query prefix, so this comparison is provisional.
+2. **Fine-tuning on 1,300 synthetic pairs showed no statistically reliable improvement on the objective metric.**
    Pre-registered tests: p = 0.299 on 2,000 abstracts, and p = 0.1158 on 20,000 abstracts, where the
    fine-tuned model scored lower (MRR 0.7611 vs. 0.8019). Only the automatic cross-encoder judge
-   showed a gain (+0.0445 MRR, 3 seeds, p = 0.0229).
+   showed a gain (+0.0445 MRR, 3 seeds, p = 0.0229). Paired 95% CIs for the MRR difference (fine-tuned minus
+   untuned): −0.0148 to +0.0537 at 2,000 abstracts, −0.0907 to +0.0056 at 20,000. This held even though 63 of
+   the 90 test questions came from abstracts also used for training
+   ([`paired_ci_and_overlap.json`](experiments/paired_ci_and_overlap.json)).
 3. **The automatic judge agreed poorly with human labels** (Cohen's kappa 0.2 on 60 items),
    so results that rely on it alone should not be trusted.
 
@@ -20,6 +24,8 @@ are public. arXiv results come from the original run (May–Jun 2026); those mod
 pairs were lost in a hardware failure and cannot be re-run.
 
 **Model on HuggingFace:** [`rafiazarin/bge-base-pubmed-finetuned`](https://huggingface.co/rafiazarin/bge-base-pubmed-finetuned)
+
+**Interactive demo:** [PubMed side-by-side search](https://huggingface.co/spaces/rafiazarin/pubmed-search-demo) (retrieval only, 8-bit models in the browser; not the evaluation used for the results below)
 
 ---
 
@@ -195,6 +201,9 @@ matchers differ between conditions, and the synthetic query set was lost.
 5. Queries were encoded without BGE's query instruction prefix, and nomic without its task prefixes.
 6. The nomic PubMed score changed between the original run and the re-run on identical data, most
    likely because of a newer Ollama version. Only numbers from the same run are compared.
+7. Train/test overlap: for 63 of the 90 evaluation questions, the source abstract was also used to generate a
+   training pair, so this measures adaptation to a known collection, not generalization to unseen documents.
+   An exploratory seen/unseen split is in `experiments/paired_ci_and_overlap.json`.
 
 ## Reproduce the PubMed results
 
