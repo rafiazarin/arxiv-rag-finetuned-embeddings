@@ -1,0 +1,24 @@
+{
+  "n_labeled": 60,
+  "n_unsure": 0,
+  "confusion": {
+    "matcher_yes_human_yes": 14,
+    "matcher_yes_human_no": 16,
+    "matcher_no_human_no": 22,
+    "matcher_no_human_yes": 8
+  },
+  "precision": 0.4667,
+  "npv": 0.7333,
+  "sample_agreement": 0.6,
+  "cohens_kappa": 0.2,
+  "pool_matcher_positive_rate": 0.358,
+  "agreement_reweighted_to_pool": 0.6379,
+  "chunks_from_source_abstract": {
+    "n": 42,
+    "agree": 19
+  },
+  "chunks_from_other_abstracts": {
+    "n": 18,
+    "agree": 17
+  }
+}
