@@ -38,7 +38,7 @@ Paired significance tests (McNemar for Hit@3, paired permutation for MRR):
 
 **What this shows:**
 1. Most of the gain over nomic comes from **choosing BGE**, not from fine-tuning.
-2. Fine-tuning adds a **small, consistent ranking gain**: mean MRR +0.045 across 3 seeds (p = 0.0229, see seed study below). There is **no significant Hit@3 gain**.
+2. Fine-tuning adds a **small, consistent ranking gain**: mean MRR +0.0445 across 3 seeds (p = 0.0229, see seed study below). There is **no significant Hit@3 gain**.
 3. Training beyond epoch 1 added nothing measurable.
 
 ### Seed study (pre-registered)
