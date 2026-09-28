@@ -5,7 +5,7 @@ on PubMed and arXiv abstracts, with a focus on whether the evaluation itself can
 Built with free tools (local Mac + free Colab T4).
 
 **Summary (PubMed, 90 human-written queries):**
-1. **The base model matters most.** Untuned BGE-base beats nomic-embed-text on MRR under both
+1. **The base model choice has the clearest effect.** Untuned BGE-base beats nomic-embed-text on MRR under both
    relevance metrics below (p = 0.0011 and p = 0.0323). Hit@3 differences were not significant.
 2. **Whether fine-tuning helps depends on how relevance is judged.** Under an automatic
    cross-encoder judge, fine-tuning adds +0.0445 MRR (3 seeds, p = 0.0229). Under an objective
