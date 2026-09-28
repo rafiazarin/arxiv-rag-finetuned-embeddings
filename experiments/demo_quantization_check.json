@@ -1,0 +1,18 @@
+{
+  "noft": {
+    "query_cosine_mean": 0.9978,
+    "query_cosine_min": 0.9968,
+    "identical_top3_rate": 0.8333,
+    "top3_overlap_mean": 0.9741,
+    "metric1_mrr_full": 0.9519,
+    "metric1_mrr_demo": 0.9519
+  },
+  "ft": {
+    "query_cosine_mean": 0.9956,
+    "query_cosine_min": 0.9936,
+    "identical_top3_rate": 0.8,
+    "top3_overlap_mean": 0.9593,
+    "metric1_mrr_full": 0.9722,
+    "metric1_mrr_demo": 0.9611
+  }
+}
