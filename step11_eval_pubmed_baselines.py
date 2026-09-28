@@ -8,19 +8,22 @@ the same cross-encoder matcher (step10e.is_match).
 Eval set: pubmed_manual_eval90.json (90 human-written queries)
 Models:
   - BGE-base-en-v1.5, no fine-tuning
-  - BGE-base, PubMed FT, final model (5 epochs)
-  - BGE-base, PubMed FT, epoch-1 checkpoint (what the original notebook saved)
+  - BGE-base, PubMed FT (5 epochs): local experiments/pubmed_bge/model if present,
+    otherwise downloaded from HuggingFace (rafiazarin/bge-base-pubmed-finetuned)
+  - BGE-base, PubMed FT epoch-1 checkpoint: only if experiments/pubmed_bge_ep1 exists
   - nomic-embed-text via Ollama, no fine-tuning
 
 Tests: McNemar (Hit@3) + paired sign-flip permutation test (MRR).
-Output: experiments/pubmed_step11_scores.json (includes per-query scores)
+Output: experiments/pubmed_step11_scores.json (or ..._hub.json with --from-hub)
 
 Usage (Ollama must be running):
-    python step11_eval_pubmed_baselines.py
+    python step11_eval_pubmed_baselines.py              # use local models if present
+    python step11_eval_pubmed_baselines.py --from-hub   # force the published HF model
 """
 import os
 import json
 import pickle
+import argparse
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
@@ -31,7 +34,7 @@ import step10e_eval_pubmed as pub
 np.random.seed(42)  # reproducible bootstrap CIs
 
 BGE_BASE = "BAAI/bge-base-en-v1.5"
-OUT_PATH = os.path.join(EXPERIMENTS_DIR, "pubmed_step11_scores.json")
+HUB_FT   = "rafiazarin/bge-base-pubmed-finetuned"
 E = lambda *p: os.path.join(EXPERIMENTS_DIR, *p)
 
 
@@ -50,7 +53,7 @@ def get_or_build_index(model, chunks, path):
         print(f"  Loading cached index: {path}")
         return faiss.read_index(path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    print(f"  Building untuned BGE index for {len(chunks):,} chunks (one-time)...")
+    print(f"  Building index for {len(chunks):,} chunks (one-time)...")
     emb = model.encode([c["text"] for c in chunks], batch_size=64,
                        show_progress_bar=True, normalize_embeddings=True,
                        convert_to_numpy=True).astype("float32")
@@ -71,6 +74,11 @@ def paired_permutation_test(a, b, n=10000, seed=42):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--from-hub", action="store_true",
+                        help="use the published HuggingFace model instead of local folders")
+    args = parser.parse_args()
+
     print("Checking Ollama...")
     try:
         assert len(nomic_embed("test")) > 0
@@ -82,19 +90,28 @@ def main():
         chunks = pickle.load(f)
 
     bge = SentenceTransformer(BGE_BASE)
-    ft5 = SentenceTransformer(need(E("pubmed_bge", "model")))
-    ft1 = SentenceTransformer(need(E("pubmed_bge_ep1", "model")))
+    models = {"BGE-base (no FT)": (st_embed(bge),
+              get_or_build_index(bge, chunks, E("bge_base_noft", "pubmed.faiss")))}
 
-    models = {
-        "BGE-base (no FT)": (st_embed(bge),
-                             get_or_build_index(bge, chunks, E("bge_base_noft", "pubmed.faiss"))),
-        "BGE-base (PubMed FT, 5 ep)": (st_embed(ft5),
-                                       faiss.read_index(need(E("pubmed_bge", "pubmed_bge.faiss")))),
-        "BGE-base (PubMed FT, ep 1)": (st_embed(ft1),
-                                       faiss.read_index(need(E("pubmed_bge_ep1", "pubmed_bge.faiss")))),
-        "nomic (no FT)": (nomic_embed,
-                          faiss.read_index(need(E("pubmed_baseline", "pubmed_baseline.faiss")))),
-    }
+    local_ft = E("pubmed_bge", "model")
+    if os.path.exists(local_ft) and not args.from_hub:
+        print(f"Fine-tuned model: local ({local_ft})")
+        ft5 = SentenceTransformer(local_ft)
+        ft5_index = get_or_build_index(ft5, chunks, E("pubmed_bge", "pubmed_bge.faiss"))
+    else:
+        print(f"Fine-tuned model: HuggingFace ({HUB_FT})")
+        ft5 = SentenceTransformer(HUB_FT)
+        ft5_index = get_or_build_index(ft5, chunks, E("pubmed_bge_hub", "pubmed_bge_hub.faiss"))
+    models["BGE-base (PubMed FT, 5 ep)"] = (st_embed(ft5), ft5_index)
+
+    has_ep1 = os.path.exists(E("pubmed_bge_ep1", "model")) and not args.from_hub
+    if has_ep1:
+        ft1 = SentenceTransformer(E("pubmed_bge_ep1", "model"))
+        models["BGE-base (PubMed FT, ep 1)"] = (st_embed(ft1),
+            get_or_build_index(ft1, chunks, E("pubmed_bge_ep1", "pubmed_bge.faiss")))
+
+    models["nomic (no FT)"] = (nomic_embed,
+        faiss.read_index(need(E("pubmed_baseline", "pubmed_baseline.faiss"))))
 
     scores = {}
     for label, (embed_fn, index) in models.items():
@@ -109,8 +126,9 @@ def main():
 
     tests = [("BGE-base (PubMed FT, 5 ep)", "BGE-base (no FT)"),
              ("BGE-base (no FT)", "nomic (no FT)"),
-             ("BGE-base (PubMed FT, 5 ep)", "nomic (no FT)"),
-             ("BGE-base (PubMed FT, 5 ep)", "BGE-base (PubMed FT, ep 1)")]
+             ("BGE-base (PubMed FT, 5 ep)", "nomic (no FT)")]
+    if has_ep1:
+        tests.append(("BGE-base (PubMed FT, 5 ep)", "BGE-base (PubMed FT, ep 1)"))
     sig = []
     print(f"\n  Paired significance (two-sided)")
     print(f"  {'A vs B':<58} {'McNemar':>8} {'PermMRR':>8}")
@@ -121,14 +139,15 @@ def main():
         sig.append({"a": a, "b": b, "mcnemar_hit": p_hit, "paired_perm_mrr": p_mrr})
     print(f"{'='*74}")
 
+    out_path = E("pubmed_step11_scores_hub.json" if args.from_hub else "pubmed_step11_scores.json")
     out = {"n_queries": len(pairs), "scores": {}, "significance": sig}
     for label, s in scores.items():
         out["scores"][label] = {k: v for k, v in s.items() if not k.startswith("_")}
         out["scores"][label]["per_query_hit"] = s["_hit_scores"]
         out["scores"][label]["per_query_rr"] = s["_rr_scores"]
-    with open(OUT_PATH, "w") as f:
+    with open(out_path, "w") as f:
         json.dump(out, f, indent=2)
-    print(f"Saved to {OUT_PATH}")
+    print(f"Saved to {out_path}")
 
 
 if __name__ == "__main__":

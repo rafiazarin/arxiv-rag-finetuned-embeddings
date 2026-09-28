@@ -19,6 +19,7 @@ on two domains: arXiv abstracts and PubMed abstracts. Built with free tools
 90 human-written queries over 7,627 chunks from 2,000 PubMed abstracts.
 All models evaluated in the same run with the same relevance matcher.
 Results file: [`experiments/pubmed_step11_scores.json`](experiments/pubmed_step11_scores.json).
+Re-running with the published HuggingFace model reproduces these numbers exactly ([`experiments/pubmed_step11_scores_hub.json`](experiments/pubmed_step11_scores_hub.json)).
 
 | Model | Hit@3 | MRR (95% CI) | NDCG@10 |
 |---|---|---|---|
@@ -144,7 +145,6 @@ matchers differ between conditions, and the synthetic query set was lost, so it 
 5. The nomic PubMed score changed between the original run (0.6889 Hit@3) and the re-run
    (0.7778) on identical data, most likely because of a newer Ollama version. Only numbers
    from the same run are compared above.
-6. `step11_eval_pubmed_baselines.py` currently expects both fine-tuned models as local folders.
 
 ## Reproduce the PubMed results
 
@@ -158,8 +158,9 @@ ollama pull nomic-embed-text           # with `ollama serve` running
 
 python restore_pubmed_pool.py          # rebuilds data/pubmed_pool.json, verified against repo data
 python step10b_build_pubmed_index.py   # nomic baseline index
-# Train in Colab: notebooks/step10d_train_pubmed_bge.ipynb, then unzip into experiments/
-python step11_eval_pubmed_baselines.py
+python step11_eval_pubmed_baselines.py --from-hub   # uses the published model; no training needed
+# To retrain instead: run notebooks/step10d_train_pubmed_bge.ipynb in Colab,
+# unzip into experiments/, then run the script without --from-hub
 ```
 
 `requirements.txt` lists the full original environment; the command above installs only what
